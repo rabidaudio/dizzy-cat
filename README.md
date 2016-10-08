@@ -15,3 +15,11 @@ Downsampling audio:
 
 EEPROM has room for 256K, each meow seems to be about 40K
 
+
+
+Notes
+
+http://forum.arduino.cc/index.php?topic=72092.0
+https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM
+http://playground.arduino.cc/Main/TimerPWMCheatsheet
+http://apcmag.com/arduino-project-5-digital-audio-player.htm/
