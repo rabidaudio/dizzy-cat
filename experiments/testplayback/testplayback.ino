@@ -2,15 +2,15 @@
 
 #define EADDR 0x50
 
-//int totalClips = 4;
-//int clipLens[] = {7169, 8098, 6958, 7564};
+int totalClips = 4;
+int clipLens[] = {7169, 8098, 6958, 7564};
 
-const int buffSize = 255; //255;
-byte playBuffer[7170];
+const int buffSize = 255;
+byte playBuffer[buffSize];
 volatile uint16_t playPointer = 0;
 uint16_t writePointer = 0;
 
-volatile uint16_t missed = 0;
+//volatile uint16_t missed = 0;
 
 void setup() {
 
@@ -21,21 +21,32 @@ void setup() {
   pinMode(9, OUTPUT);
   analogWrite(9, 0);
 
-  Serial.begin(9600);
+//  Serial.begin(9600);
 
-  Serial.println("play");
-//  delay(1000);
-  play();
+  for(int i = 0; i < totalClips; i++){
+    int start = 0;
+    for(int j=0;j<i;j++){
+      start += clipLens[j];
+    }
+
+    play(start, clipLens[i]);
+
+    delay(1000);
+  }
+
+}
+
+void loop() {
+
 }
 
 ISR(TIMER1_COMPA_vect){
    //interrupt commands for TIMER 1 here
    if(playPointer < writePointer){
      analogWrite(9, playBuffer[playPointer % buffSize]);
-//    analogWrite(9, CAT1[playPointer]);
      playPointer++;
-   }else{
-     missed++;
+//   }else{
+//     missed++;
    }
 }
 
@@ -60,7 +71,7 @@ void setupTimers(){
   sei(); // allow interrupts
 }
 
-void play(){
+void play(int offset, int len){
   int i;
   int chunk;
   playPointer = 0;
@@ -69,13 +80,9 @@ void play(){
   // fill play buffer
   while(writePointer < buffSize){
     chunk = ((buffSize - writePointer) >= 32) ? 32 : buffSize - writePointer;
-    readMax32Bytes(writePointer, playBuffer, buffSize, writePointer, chunk);
+    readMax32Bytes(offset + writePointer, playBuffer, buffSize, writePointer, chunk);
     writePointer += chunk;
   }
-//  for(writePointer = 0; writePointer < buffSize; i++){
-//    playBuffer[writePointer] = CAT1[writePointer];    
-//    writePointer++;
-//  }
 
 //  Serial.println("loaded initial");
 
@@ -87,7 +94,7 @@ void play(){
   uint16_t currentPlayPointer = 0;
   uint16_t toFill;
 
-  while(writePointer < 7170){
+  while(writePointer < len){
 
     cli();
     currentPlayPointer = playPointer;
@@ -104,19 +111,14 @@ void play(){
 
       // ... or less if we are at the end of the sample
       if((7170 - writePointer) < buffSize){
-        toFill = min(toFill, 7170 - writePointer);
+        toFill = min(toFill, len - writePointer);
       }
 //      Serial.print("to fill "); Serial.println(toFill, DEC);
 
-
-//      for(i = 0; i < toFill; i++){
-//        playBuffer[writePointer % buffSize] = CAT1[writePointer];
-//        writePointer++;
-//      }
       i = 0;
       while(i < toFill){
         chunk = ((toFill - i) >= 32) ? 32 : toFill - i;
-        readMax32Bytes(writePointer, playBuffer, buffSize, writePointer, chunk);
+        readMax32Bytes(offset + writePointer, playBuffer, buffSize, writePointer, chunk);
         writePointer += chunk;
         i += chunk;
       }
@@ -125,11 +127,8 @@ void play(){
     
 //    Serial.print("new write pointer "); Serial.println(writePointer, DEC);
 //    Serial.println("=====");
-//    delayMicroseconds(100);
   
   }
-
-//  Serial.println("write complete");
 
   // wait for play to finish
   while(playPointer < writePointer){ ; }
@@ -139,18 +138,14 @@ void play(){
   TIMSK1 = 0;
   sei();
 
-  Serial.println("play complete");
+//  Serial.println("play complete");
 
   // turn off speaker
   analogWrite(9, 0);
 
 //  Serial.print("write pointer "); Serial.println(writePointer, DEC);
 //  Serial.print("play pointer "); Serial.println(playPointer, DEC);
-  Serial.print("missed "); Serial.println(missed, DEC);
-}
-
-void loop() {
-
+//  Serial.print("missed "); Serial.println(missed, DEC);
 }
 
 void readMax32Bytes(int address, byte* data, int buffSize, uint16_t offset, int len){
