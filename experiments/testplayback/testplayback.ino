@@ -55,16 +55,16 @@ void setupTimers(){
   TCCR2B = TCCR2B & 0b11111000 | 0x01;
 
   // http://www.8bit-era.cz/arduino-timer-interrupts-calculator.html
-  // TIMER 1 for interrupt frequency 80000 Hz:
+  // TIMER 1 for interrupt frequency 8000 Hz:
   cli(); // stop interrupts
   TCCR1A = 0; // set entire TCCR1A register to 0
   TCCR1B = 0; // same for TCCR1B
   TCNT1  = 0; // initialize counter value to 0
-  // set compare match register for 80000 Hz increments
-  OCR1A = 249;
+  // set compare match register for 8000 Hz increments
+  OCR1A = 249; // = 16000000 / (8 * 8000) - 1
   // turn on CTC mode
   TCCR1B |= (1 << WGM12);
-  // Set CS12, CS11 and CS10 bits for 1 prescaler
+  // Set CS12, CS11 and CS10 bits for 8 prescaler
   TCCR1B |= (0 << CS12) | (1 << CS11) | (0 << CS10);
   // enable timer compare interrupt
 //  TIMSK1 |= (1 << OCIE1A);
